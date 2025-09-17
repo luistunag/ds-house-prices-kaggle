@@ -1,0 +1,95 @@
+---
+title: "04 – Model Evaluation"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, warning = FALSE,
+  fig.width = 7, fig.height = 5, fig.align = "center"
+)
+set.seed(123)
+```
+
+# Libraries and I/O
+
+```{r}
+library(dplyr)
+library(here)
+library(xgboost)
+library(ggplot2)
+library(yardstick)
+```
+
+```{r}
+# Load processed training data
+train_ready <- readRDS(here("data", "train_ready.rds"))
+
+# Load final model
+final_model <- readRDS(here("models", "xgb_model_final.rds"))
+
+target_var <- "median_house_value"
+X_train <- data.matrix(train_ready %>% select(-all_of(target_var)))
+y_train <- train_ready[[target_var]]
+
+dtrain <- xgb.DMatrix(X_train, label = y_train)
+```
+
+# In-sample evaluation (training fit)
+
+```{r}
+pred_train <- predict(final_model, dtrain)
+
+results_train <- tibble(
+  actual = y_train,
+  predicted = pred_train,
+  residuals = y_train - pred_train
+)
+
+head(results_train, 10)
+```
+
+# Metrics
+
+```{r}
+# RMSE, MAE, R²
+rmse_val <- yardstick::rmse_vec(results_train$actual, results_train$predicted)
+mae_val  <- yardstick::mae_vec(results_train$actual, results_train$predicted)
+rsq_val  <- yardstick::rsq_vec(results_train$actual, results_train$predicted)
+
+metrics_tbl <- tibble(
+  Metric = c("RMSE", "MAE", "R²"),
+  Value  = c(rmse_val, mae_val, rsq_val)
+)
+print(metrics_tbl)
+
+readr::write_csv(metrics_tbl, here("models", "xgb_train_metrics.csv"))
+```
+
+# Residual analysis
+
+```{r}
+p_res <- ggplot(results_train, aes(x = predicted, y = residuals)) +
+  geom_point(alpha = 0.4) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Residuals vs Predicted", x = "Predicted values", y = "Residuals") +
+  theme_minimal()
+
+print(p_res)
+ggsave(here("reports","figures","xgb_residuals.png"), p_res,
+       width = 7, height = 5, dpi = 120)
+```
+# Predicted vs actual
+
+```{r}
+p_fit <- ggplot(results_train, aes(x = actual, y = predicted)) +
+  geom_point(alpha = 0.4, color = "steelblue") +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "red") +
+  labs(title = "Predicted vs. Actual", x = "Actual values", y = "Predicted values") +
+  theme_minimal()
+
+print(p_fit)
+ggsave(here("reports","figures","xgb_predicted_vs_actual.png"), p_fit,
+       width = 7, height = 5, dpi = 120)
+```
+

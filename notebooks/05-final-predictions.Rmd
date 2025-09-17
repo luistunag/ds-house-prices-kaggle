@@ -1,0 +1,70 @@
+---
+title: "05 – Final Predictions and Submission"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, warning = FALSE,
+  fig.width = 7, fig.height = 5, fig.align = "center"
+)
+set.seed(123)
+```
+
+# Libraries and I/O
+
+```{r}
+library(dplyr)
+library(here)
+library(xgboost)
+library(readr)
+```
+
+```{r}
+# Load processed test set and trained model
+test_ready  <- readRDS(here("data", "test_ready.rds"))
+final_model <- readRDS(here("models", "xgb_model_final.rds"))
+
+# Convert test to matrix
+X_test <- data.matrix(test_ready)
+dtest  <- xgb.DMatrix(data = X_test)
+
+# Just to confirm
+dim(test_ready)
+```
+
+# Generate predictions
+
+```{r}
+test_predictions <- predict(final_model, dtest)
+
+head(test_predictions)
+summary(test_predictions)
+```
+
+# Build submission dataframe
+
+```{r}
+# Make sure test set still has an ID column
+if(!"id" %in% names(test_ready)){
+  stop("The test set must contain an 'id' column for submission!")
+}
+
+submission <- tibble(
+  id = test_ready$id,
+  median_house_value = test_predictions
+)
+
+head(submission)
+```
+
+# Save submission file
+
+```{r}
+# Save to CSV
+out_path <- here("reports", "submission.csv")
+write_csv(submission, out_path)
+
+cat("Submission file created:", out_path, "\n")
+```
+

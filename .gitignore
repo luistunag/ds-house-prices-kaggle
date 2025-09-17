@@ -1,0 +1,31 @@
+# R specific
+.Rhistory
+.RData
+.Rproj.user/
+.Ruserdata
+.Rproj
+
+# Cache
+*.Rout
+*.Rout.save
+*.Rout.fail
+*.Rapp.history
+.Rcheck/
+
+# Knitr / Rmarkdown
+*.utf8.md
+*.knit.md
+*.nb.html
+*.html
+
+# Data (don’t upload Kaggle CSVs)
+data/*
+!data/.gitkeep   # keep folder structure
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Emacs backup files
+*~
+\#*\#

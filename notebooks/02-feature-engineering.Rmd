@@ -1,0 +1,133 @@
+---
+title: "02 – Feature Engineering"
+output: html_notebook
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, warning = FALSE,
+  fig.width = 7, fig.height = 5, fig.align = "center"
+)
+library(dplyr)
+library(fastDummies)
+library(skimr)
+library(caret)
+library(here)
+set.seed(123)
+
+# Load datasets (assuming here() root is the project folder)
+train <- read.csv(here("data", "train.csv"))
+test  <- read.csv(here("data", "test.csv"))
+```
+
+# Create derived features
+
+```{r}
+train <- train %>%
+  mutate(
+    rooms_per_household       = total_rooms / households,
+    bedrooms_per_household    = total_bedrooms / households,
+    bedrooms_per_room         = total_bedrooms / total_rooms,
+    population_per_household  = population / households,
+    log_median_income         = log(median_income + 1),
+    interaction_income_rooms  = median_income * total_rooms,
+    interaction_income_bedrooms = median_income * total_bedrooms,
+    population_density        = population / total_rooms,
+    income_per_room           = median_income / total_rooms,
+    income_per_bedroom        = median_income / total_bedrooms,
+    log_total_rooms           = log(total_rooms + 1),
+    log_total_bedrooms        = log(total_bedrooms + 1),
+    age_income_ratio          = housing_median_age / median_income,
+    log_population_density    = log(population / total_rooms + 1)
+  )
+
+test <- test %>%
+  mutate(
+    rooms_per_household       = total_rooms / households,
+    bedrooms_per_household    = total_bedrooms / households,
+    bedrooms_per_room         = total_bedrooms / total_rooms,
+    population_per_household  = population / households,
+    log_median_income         = log(median_income + 1),
+    interaction_income_rooms  = median_income * total_rooms,
+    interaction_income_bedrooms = median_income * total_bedrooms,
+    population_density        = population / total_rooms,
+    income_per_room           = median_income / total_rooms,
+    income_per_bedroom        = median_income / total_bedrooms,
+    log_total_rooms           = log(total_rooms + 1),
+    log_total_bedrooms        = log(total_bedrooms + 1),
+    age_income_ratio          = housing_median_age / median_income,
+    log_population_density    = log(population / total_rooms + 1)
+  )
+```
+
+# Quick summary of engineering features
+
+```{r}
+skim(train %>% 
+       select(rooms_per_household, bedrooms_per_household, bedrooms_per_room, 
+              population_per_household, log_median_income, 
+              interaction_income_rooms, interaction_income_bedrooms, 
+              population_density, income_per_room, income_per_bedroom, 
+              log_total_rooms, log_total_bedrooms, 
+              age_income_ratio, log_population_density))
+```
+
+# Handle missing values
+
+```{r}
+train_imputed <- train %>%
+  mutate(across(everything(), ~ ifelse(is.na(.), median(., na.rm = TRUE), .)))
+
+test_imputed <- test %>%
+  mutate(across(everything(), ~ ifelse(is.na(.), median(., na.rm = TRUE), .)))
+```
+
+# Log-transform selected variables
+
+```{r}
+train_log <- train_imputed %>%
+  mutate(across(c("total_rooms", "total_bedrooms", "population", "households"), log1p))
+
+test_log <- test_imputed %>%
+  mutate(across(c("total_rooms", "total_bedrooms", "population", "households"), log1p))
+```
+
+# Scale numeric features
+
+```{r}
+numeric_cols <- names(train_log)[sapply(train_log, is.numeric)]
+numeric_cols <- setdiff(numeric_cols, c("median_house_value", "id"))  
+
+preProc <- preProcess(train_log[, numeric_cols], method = c("range"))
+
+train_scaled <- train_log
+train_scaled[, numeric_cols] <- predict(preProc, train_log[, numeric_cols])
+
+test_scaled <- test_log
+test_scaled[, numeric_cols] <- predict(preProc, test_log[, numeric_cols])
+```
+
+# Encode categorical variables
+
+```{r}
+train_ready <- train_scaled %>%
+  mutate(across(ocean_proximity, as.factor)) %>%
+  fastDummies::dummy_cols(select_columns = "ocean_proximity", 
+                          remove_first_dummy = TRUE, 
+                          remove_selected_columns = TRUE)
+
+test_ready <- test_scaled %>%
+  mutate(across(ocean_proximity, as.factor)) %>%
+  fastDummies::dummy_cols(select_columns = "ocean_proximity", 
+                          remove_first_dummy = TRUE, 
+                          remove_selected_columns = TRUE)
+```
+
+# Save processed datasets
+
+```{r}
+saveRDS(train_ready, here("data", "train_ready.rds"))
+saveRDS(test_ready,  here("data", "test_ready.rds"))
+
+cat("Processed datasets saved in data/: train_ready.rds & test_ready.rds\n")
+```
+

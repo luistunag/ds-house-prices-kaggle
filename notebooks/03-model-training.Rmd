@@ -1,0 +1,170 @@
+---
+title: "03 – Model Training (XGBoost)"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, warning = FALSE,
+  fig.width = 7, fig.height = 5, fig.align = "center"
+)
+set.seed(123)
+```
+
+# Libraries and I/O
+
+```{r}
+library(dplyr)
+library(here)
+library(xgboost)
+library(Matrix)
+library(ggplot2)
+library(yardstick)
+```
+
+```{r}
+# Ensure output folders exist
+dir.create(here("models"), recursive = TRUE, showWarnings = FALSE)
+dir.create(here("reports","figures"), recursive = TRUE, showWarnings = FALSE)
+```
+
+```{r}
+# Load processed datasets from step 02
+train_ready <- readRDS(here("data", "train_ready.rds"))
+test_ready  <- readRDS(here("data", "test_ready.rds"))
+
+# Target name
+target_var <- "median_house_value"
+stopifnot(target_var %in% names(train_ready))
+```
+
+# Feature matrix and label
+
+```{r}
+# Separate features/labels
+X_train_df <- train_ready %>% select(-all_of(target_var))
+y_train    <- train_ready[[target_var]]
+
+# Align test columns (not used to train)
+X_test_df  <- test_ready %>% select(all_of(names(X_train_df)))
+
+# Convert to numeric matrix (sparse for efficiency if needed)
+X_train <- data.matrix(X_train_df)
+dtrain  <- xgb.DMatrix(data = X_train, label = y_train)
+```
+
+# Parameter grid and cross-validation (k-fold + early stopping)
+
+```{r}
+# Define a small but effective grid
+grid <- expand.grid(
+  eta = c(0.03),
+  max_depth = c(6, 8),
+  subsample = c(0.8),
+  colsample_bytree = c(0.6, 0.8),
+  lambda = c(1),
+  alpha = c(0, 0.5)
+)
+
+nrounds_max <- 5000
+nfolds      <- 5
+early_stp   <- 100
+
+cv_results <- dplyr::tibble()
+best_models <- list()
+
+for (i in seq_len(nrow(grid))) {
+  params <- list(
+    objective = "reg:squarederror",
+    eta = grid$eta[i],
+    max_depth = grid$max_depth[i],
+    subsample = grid$subsample[i],
+    colsample_bytree = grid$colsample_bytree[i],
+    lambda = grid$lambda[i],
+    alpha = grid$alpha[i],
+    eval_metric = "rmse"
+  )
+
+  set.seed(123)
+  cv <- xgb.cv(
+    params = params,
+    data = dtrain,
+    nrounds = nrounds_max,
+    nfold = nfolds,
+    early_stopping_rounds = early_stp,
+    verbose = 0
+  )
+
+  best_iter <- cv$best_iteration
+  best_rmse <- cv$evaluation_log$test_rmse_mean[best_iter]
+
+  cv_results <- dplyr::bind_rows(
+    cv_results,
+    dplyr::as_tibble(params) |>
+      dplyr::mutate(best_iteration = best_iter, test_rmse = best_rmse)
+  )
+
+  best_models[[i]] <- list(params = params, best_iteration = best_iter, cv = cv)
+}
+
+# Pick best by lowest RMSE
+cv_results <- cv_results |> arrange(test_rmse)
+print(head(cv_results, 10))
+
+best_idx    <- which.min(cv_results$test_rmse)
+best_params <- best_models[[best_idx]]$params
+best_iter   <- best_models[[best_idx]]$best_iteration
+
+cat("Best params:\n")
+print(best_params)
+cat("Best nrounds:", best_iter, "\n")
+cat("Best CV RMSE:", cv_results$test_rmse[best_idx], "\n")
+
+# Save CV results
+readr::write_csv(cv_results, here("models", "xgb_cv_results.csv"))
+```
+
+# Train final model on full training set
+
+```{r}
+set.seed(123)
+final_model <- xgb.train(
+  params  = best_params,
+  data    = dtrain,
+  nrounds = best_iter,
+  verbose = 0
+)
+
+# Save model (RDS)
+saveRDS(final_model, file = here("models", "xgb_model_final.rds"))
+cat("Final model saved to models/xgb_model_final.rds\n")
+```
+
+# Feature importance (table + plot)
+
+```{r}
+imp <- xgb.importance(model = final_model)
+readr::write_csv(imp, here("models","xgb_feature_importance.csv"))
+
+library(dplyr); library(ggplot2)
+imp_top <- imp %>% arrange(desc(Gain)) %>% slice_head(n = 20)
+
+g <- ggplot(imp_top, aes(x = reorder(Feature, Gain), y = Gain)) +
+  geom_col() + coord_flip() +
+  labs(title = "XGBoost Feature Importance (Top 20)", x = "Feature", y = "Gain") +
+  theme_minimal()
+
+ggplot2::ggsave(
+  filename = here("reports","figures","xgb_feature_importance_top20.png"),
+  plot = g, width = 7, height = 5, dpi = 120
+)
+```
+
+# Quick CV metric (sanity)
+
+```{r}
+# Report best CV RMSE (already printed)
+best_rmse <- cv_results$test_rmse[best_idx]
+cat(sprintf("Best CV RMSE: %.4f\n", best_rmse))
+```
+

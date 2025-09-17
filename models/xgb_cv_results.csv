@@ -1,0 +1,9 @@
+objective,eta,max_depth,subsample,colsample_bytree,lambda,alpha,eval_metric,best_iteration,test_rmse
+reg:squarederror,0.03,6,0.8,0.6,1,0,rmse,2812,43059.59981662475
+reg:squarederror,0.03,6,0.8,0.8,1,0,rmse,4422,43066.92829789241
+reg:squarederror,0.03,6,0.8,0.6,1,0.5,rmse,2805,43095.445966909385
+reg:squarederror,0.03,6,0.8,0.8,1,0.5,rmse,3206,43121.459648672506
+reg:squarederror,0.03,8,0.8,0.6,1,0,rmse,3141,43220.9013221629
+reg:squarederror,0.03,8,0.8,0.6,1,0.5,rmse,2124,43291.258444125495
+reg:squarederror,0.03,8,0.8,0.8,1,0,rmse,2890,43346.92766581477
+reg:squarederror,0.03,8,0.8,0.8,1,0.5,rmse,2641,43396.041748028525

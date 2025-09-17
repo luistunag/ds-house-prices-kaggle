@@ -1,0 +1,120 @@
+---
+title: "01 – Exploratory Data Analysis"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  message = FALSE, warning = FALSE,
+  fig.width = 7, fig.height = 5, fig.align = "center"
+)
+set.seed(123)
+```
+
+# Load libraries
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(skimr)
+library(DataExplorer)
+library(corrplot)
+library(here)
+```
+
+# Load data
+
+```{r}
+# Expect files to be placed under data/
+train <- read.csv(here("data", "train.csv"))
+test  <- read.csv(here("data", "test.csv"))
+```
+
+# Dataset overview
+
+```{r}
+dim(train)
+head(train)
+colSums(is.na(train))
+```
+
+# Basic sanity checks
+
+```{r}
+# Column names and basic types
+tibble::tibble(variable = names(train),
+               class = sapply(train, class)) %>% print(n = Inf)
+
+# Duplicates
+cat("Duplicated rows in train:", sum(duplicated(train)), "\n")
+cat("Duplicated rows in test :", sum(duplicated(test)),  "\n")
+```
+# Missing values overview
+```{r}
+# Count NAs by column
+na_tbl <- sapply(train, function(x) sum(is.na(x))) %>%
+  sort(decreasing = TRUE)
+na_tbl[na_tbl > 0]
+```
+```{r}
+# Visual overview of missingness
+plot_missing(train)
+```
+
+
+# Descriptive statistics
+
+```{r}
+summary(train)
+skim(train)
+```
+
+# Distributions
+
+```{r}
+# Numeric histograms (auto faceted)
+plot_histogram(train)
+```
+```{r}
+# Bar plots for categorical variables
+plot_bar(train)
+```
+
+# Correlation matrix
+
+```{r}
+num_train <- dplyr::select_if(train, is.numeric)
+
+if (ncol(num_train) > 1) {
+  cor_mat <- cor(num_train, use = "pairwise.complete.obs")
+  # Print a compact view of the top-left corner
+  print(round(cor_mat[1:min(6, nrow(cor_mat)), 1:min(6, ncol(cor_mat))], 3))
+
+  # Heatmap
+  corrplot(cor_mat, method = "circle", type = "upper",
+           tl.cex = 0.7, number.cex = 0.6)
+} else {
+  message("No sufficient numeric columns for correlation matrix.")
+}
+```
+# Key relationships
+
+```{r}
+if (all(c("median_income", "median_house_value") %in% names(train))) {
+  ggplot(train, aes(x = median_income, y = median_house_value)) +
+    geom_point(alpha = 0.4) +
+    labs(title = "median_income vs. median_house_value",
+         x = "Median Income", y = "Median House Value") +
+    theme_minimal()
+}
+```
+```{r}
+if (all(c("ocean_proximity", "median_house_value") %in% names(train))) {
+  ggplot(train, aes(x = ocean_proximity, y = median_house_value)) +
+    geom_boxplot() +
+    labs(title = "median_house_value by ocean_proximity",
+         x = "Ocean Proximity", y = "Median House Value") +
+    theme_minimal()
+}
+```
+
