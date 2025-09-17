@@ -18,7 +18,6 @@ The objective is to predict housing prices based on multiple socioeconomic and g
 
 ---
 ## 📂 Repository Structure
-
 ds-house-prices-kaggle/
 │
 ├── data/                # Training and test datasets (not included, download from Kaggle)
