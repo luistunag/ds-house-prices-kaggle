@@ -64,5 +64,14 @@ ds-house-prices-kaggle/
 - Feature importance analysis highlighted median_income, rooms_per_household, and geographic variables.
 
 ---
+
+## 📑 Rendered Reports
+- [Exploratory Data Analysis](reports/html/01-eda.nb.html)
+- [Feature Engineering](reports/html/02-feature-engineering.nb.html)
+- [Model Training](reports/html/03-model-training.nb.html)
+- [Evaluation](reports/html/04-evaluation.nb.html)
+- [Final Predictions](reports/html/05-final-predictions.nb.html)
+
+---
 ## 📜 License
    MIT License
