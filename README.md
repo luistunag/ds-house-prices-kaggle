@@ -23,7 +23,7 @@ ds-house-prices-kaggle/
 │
 ├── data/                # Training and test datasets (not included, download from Kaggle)
 ├── notebooks/           # Modular RMarkdown workflow
-│   ├── 01-eda.Rmd               # Exploratory Data Analysis
+│   ├── 01-eda.Rmd       # Exploratory Data Analysis
 │   ├── 02-feature-engineering.Rmd
 │   ├── 03-model-training.Rmd
 │   ├── 04-evaluation.Rmd
