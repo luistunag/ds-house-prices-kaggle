@@ -1,18 +1,24 @@
 # House Prices Prediction – Kaggle Competition
 
-This project was developed as part of the Econometrics course in my Master’s in Data Science.  
+This project was developed as part of the Econometrics course in my Master’s in Data Science.
 The objective is to predict housing prices based on multiple socioeconomic and geographic features, using advanced regression and machine learning techniques.
 
+---
 ## 📊 Methods
-- Exploratory Data Analysis (EDA) with `ggplot2`, `skimr`, and `DataExplorer`.
-- Feature engineering: ratios, logarithmic transformations, and interaction terms.
-- Data preprocessing: missing value imputation, scaling, and dummy encoding.
-- Predictive modeling with **XGBoost** and cross-validation.
+- **Exploratory Data Analysis (EDA):** distribution analysis, correlations, visualizations.
+- **Feature Engineering:** ratios, logarithmic transformations, and interaction terms. 
+- **Data Preprocessing:** missing value imputation, scaling, dummy encoding. 
+- **Modeling:** predictive modeling with **XGBoost** and cross-validation. 
+- **Evaluation:** feature importance, error metrics, and visualization of results. 
+- **Predictions:** generation of final Kaggle submission file. 
 
 ## 🛠️ Tools & Libraries
-R, XGBoost, dplyr, caret, ggplot2, corrplot, skimr, DataExplorer.
+- **Language:** R
+- **Key packages:** xgboost, dplyr, caret, ggplot2, corrplot, skimr, DataExplorer, fastDummies, yardstick, workflows, recipes.
 
+---
 ## 📂 Repository Structure
+
 ds-house-prices-kaggle/
 │
 ├── data/                # Training and test datasets (not included, download from Kaggle)
@@ -27,6 +33,8 @@ ds-house-prices-kaggle/
 │   └── figures/         # Visualizations and plots
 ├── .gitignore
 └── README.md
+
+---
 
 ## 🚀 How to Reproduce
 1. Install the required R packages:
@@ -50,9 +58,11 @@ ds-house-prices-kaggle/
    rmarkdown::render("notebooks/05-final-predictions.Rmd")
    ```
 
+---
 ## 📈 Results
 - RMSE on cross-validation: 24959.30203
 - Feature importance analysis highlighted median_income, rooms_per_household, and geographic variables.
 
+---
 ## 📜 License
    MIT License
