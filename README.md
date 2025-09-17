@@ -13,11 +13,20 @@ The objective is to predict housing prices based on multiple socioeconomic and g
 R, XGBoost, dplyr, caret, ggplot2, corrplot, skimr, DataExplorer.
 
 ## 📂 Repository Structure
-- `notebooks/` – RMarkdown notebook with full workflow.
-- `data/` – training and test datasets (not included due to Kaggle rules).
-- `reports/figures/` – visualizations and plots.
-- `src/` – auxiliary R functions (if needed).
-- `requirements.txt` – list of R packages required.
+ds-house-prices-kaggle/
+│
+├── data/                # Training and test datasets (not included, download from Kaggle)
+├── notebooks/           # Modular RMarkdown workflow
+│   ├── 01-eda.Rmd               # Exploratory Data Analysis
+│   ├── 02-feature-engineering.Rmd
+│   ├── 03-model-training.Rmd
+│   ├── 04-evaluation.Rmd
+│   └── 05-final-predictions.Rmd
+├── models/              # Saved models and feature importance tables
+├── reports/             # Reports and results
+│   └── figures/         # Visualizations and plots
+├── .gitignore
+└── README.md
 
 ## 🚀 How to Reproduce
 1. Install the required R packages:
@@ -34,12 +43,16 @@ R, XGBoost, dplyr, caret, ggplot2, corrplot, skimr, DataExplorer.
 
 4. Run the notebook:
    ```R               
-   rmarkdown::render("notebooks/house-prices.Rmd")
+   rmarkdown::render("notebooks/01-eda.Rmd")
+   rmarkdown::render("notebooks/02-feature-engineering.Rmd")
+   rmarkdown::render("notebooks/03-model-training.Rmd")
+   rmarkdown::render("notebooks/04-evaluation.Rmd")
+   rmarkdown::render("notebooks/05-final-predictions.Rmd")
    ```
 
 ## 📈 Results
 - RMSE on cross-validation: 24959.30203
-   - Feature importance analysis highlighted median_income, rooms_per_household, and geographic variables.
+- Feature importance analysis highlighted median_income, rooms_per_household, and geographic variables.
 
 ## 📜 License
    MIT License
